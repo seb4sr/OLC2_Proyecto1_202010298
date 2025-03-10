@@ -33,6 +33,45 @@ using IToken = Antlr4.Runtime.IToken;
 [System.CLSCompliant(false)]
 public interface ILanguageVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <summary>
+	/// Visit a parse tree produced by <see cref="LanguageParser.program"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitProgram([NotNull] LanguageParser.ProgramContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="LanguageParser.dcl"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitDcl([NotNull] LanguageParser.DclContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="LanguageParser.varDcl"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitVarDcl([NotNull] LanguageParser.VarDclContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>ExprStmt</c>
+	/// labeled alternative in <see cref="LanguageParser.stmt"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitExprStmt([NotNull] LanguageParser.ExprStmtContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>PrintStmt</c>
+	/// labeled alternative in <see cref="LanguageParser.stmt"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitPrintStmt([NotNull] LanguageParser.PrintStmtContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>Identifier</c>
+	/// labeled alternative in <see cref="LanguageParser.expr"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitIdentifier([NotNull] LanguageParser.IdentifierContext context);
+	/// <summary>
 	/// Visit a parse tree produced by the <c>Number</c>
 	/// labeled alternative in <see cref="LanguageParser.expr"/>.
 	/// </summary>
@@ -60,5 +99,12 @@ public interface ILanguageVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitParens([NotNull] LanguageParser.ParensContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>Negate</c>
+	/// labeled alternative in <see cref="LanguageParser.expr"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitNegate([NotNull] LanguageParser.NegateContext context);
 }
 } // namespace analyzer

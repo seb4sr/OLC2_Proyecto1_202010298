@@ -32,3 +32,4 @@
 /home/sebas/Universidad/1 2025/Compi2/Proyecto1/OLC2_Proyecto1_202010298/api/obj/Debug/net9.0/api.genruntimeconfig.cache
 /home/sebas/Universidad/1 2025/Compi2/Proyecto1/OLC2_Proyecto1_202010298/api/obj/Debug/net9.0/ref/api.dll
 /home/sebas/Universidad/1 2025/Compi2/Proyecto1/OLC2_Proyecto1_202010298/api/bin/Debug/net9.0/Antlr4.Runtime.Standard.dll
+/home/sebas/Universidad/1 2025/Compi2/Proyecto1/OLC2_Proyecto1_202010298/api/obj/Debug/net9.0/api.sourcelink.json

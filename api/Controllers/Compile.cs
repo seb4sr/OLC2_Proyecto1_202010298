@@ -6,6 +6,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using analyzer;
 using Antlr4.Runtime;
+using Antlr4.Runtime.Tree;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 
@@ -21,44 +22,39 @@ namespace api.Controllers
             _logger = logger;
         }
 
-        public IActionResult Index()
-        {
-            return View();
-        }
-
-        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-        public IActionResult Error()
-        {
-            return View("Error!");
-        }
-
         public class CompileRequest
         {
             [Required]
-            public required string Code { get; set; }
+            public required string entrada { get; set; }
         }
 
+        // POST /compile
         [HttpPost]
-        
-        public async Task<IActionResult> Post([FromBody] CompileRequest request)
+        public IActionResult Post([FromBody] CompileRequest request)
         {
             if (!ModelState.IsValid)
             {
-                return BadRequest(ModelState);
+                return BadRequest(new { error = "Invalid request" });
             }
 
-            _logger.LogInformation("Compiling code: {0}", request.Code);
-
-            var inputStream = new AntlrInputStream(request.Code);
+            var inputStream = new AntlrInputStream(request.entrada);
             var lexer = new LanguageLexer(inputStream);
-            var tokenStream = new CommonTokenStream(lexer);
-            var parser = new LanguageParser(tokenStream);
-            var tree = parser.expr();
+            var tokens = new CommonTokenStream(lexer);
+            var parser = new LanguageParser(tokens);
+
+            var tree = parser.program();
 
             var visitor = new CompilerVisitor();
-            var result = visitor.Visit(tree);
+            visitor.Visit(tree);
 
-            return Ok(result);
+            return Ok(new { result = visitor.output });
+
+            // var walker = new ParseTreeWalker();
+            // var lister = new CompilerListerner();
+            // walker.Walk(lister, tree);
+
+            // return Ok(new { result = lister.GetResult() });
         }
+
     }
 }
