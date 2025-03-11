@@ -1,3 +1,9 @@
 npm run dev // en carpte mi-proyecto front
 dotnet run // en api back
 antlr4 -Dlanguage=CSharp -o analyzer -package analyzer -visitor -no-listener ./grammars/*.g4
+
+
+
+Accioens Importantes
+Boton crear archivo y cargar archico
+asignaciones

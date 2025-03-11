@@ -1,31 +1,55 @@
 public class Environment
 {
 
-    public Dictionary<string, int> variables = new Dictionary<string, int>();
-    // TODO: parent environment
+    public Dictionary<string, ValueWrapper> variables = new Dictionary<string, ValueWrapper>();
+    private Environment? parent;
 
-    public int GetVariable(string id)
+    public Environment(Environment? parent)
+    {
+        this.parent = parent;
+    }
+
+    public ValueWrapper GetVariable(string id)
     {
         if (variables.ContainsKey(id))
         {
             return variables[id];
         }
+
+        if (parent != null)
+        {
+            return parent.GetVariable(id);
+        }
+
+        throw new Exception("Variable " + id + " not found");
+    }
+
+    public void DeclareVariable(string id, ValueWrapper value)
+    {
+        if (variables.ContainsKey(id))
+        {
+            throw new Exception("Variable " + id + " already declared");
+        }
         else
         {
-            throw new Exception("Variable " + id + " not found");
+            variables[id] = value;
         }
     }
 
-    public void SetVariable(string id, int value)
+    public ValueWrapper AssignVariable(string id, ValueWrapper value)
     {
         if (variables.ContainsKey(id))
         {
             variables[id] = value;
+            return value;
         }
-        else
+
+        if (parent != null)
         {
-            variables.Add(id, value);
+            return parent.AssignVariable(id, value);
         }
+
+        throw new Exception("Variable " + id + " not found");
     }
 
 }

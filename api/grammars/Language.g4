@@ -1,21 +1,33 @@
 grammar Language;
 
-program: dcl*;
+program: declaraciones*;
 
-dcl: varDcl | stmt;
+declaraciones: declaracion_variable | stmt;
 
-varDcl: 'var' ID '=' expr ';';
+declaracion_variable: 'var' ID expr '=' expr ';';
 
-stmt: expr ';' # ExprStmt | 'print(' expr ')' ';' # PrintStmt;
+stmt: expr ';' # Expresion | 'fmt.Println(' expr ')' ';' # FmtPrint;
+
 
 expr:
-	'-' expr						# Negate
+	'-' expr						# Negacion
 	| expr op = ('*' | '/') expr	# MulDiv
-	| expr op = ('+' | '-') expr	# AddSub
-	| INT							# Number
-	| ID							# Identifier
-	| '(' expr ')'					# Parens;
+	| expr op = ('+' | '-') expr	# SumRes
+	| expr op = ('>' | '<' | '>=' | '<=') expr	# Relacioanles
+	| expr op = ('==' | '!=') expr				# Igualdad
+	| ID '=' expr					# Asignacion
+	| BOOL							# Boolean
+	| FLOAT 						# Float
+	| STRING						# String
+	| RUNE							# Rune
+	| INT							# Entero
+	| ID							# Id
+	| '(' expr ')'					# Parentesis;
 
 INT: [0-9]+;
+BOOL: 'true' | 'false';
+FLOAT: [0-9]+ '.' [0-9]+;
+STRING: '"' ~'"'* '"';
+RUNE: '\''  ~'\'' '\'';
 WS: [ \t\r\n]+ -> skip;
 ID: [a-zA-Z]+;
