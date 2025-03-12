@@ -24,7 +24,7 @@ public class Environment
         throw new Exception("Variable " + id + " not found");
     }
 
-    public void DeclareVariable(string id, ValueWrapper value)
+    public void DeclaracionVariable(string id, ValueWrapper value)
     {
         if (variables.ContainsKey(id))
         {
@@ -36,7 +36,7 @@ public class Environment
         }
     }
 
-    public ValueWrapper AssignVariable(string id, ValueWrapper value)
+    public ValueWrapper AsignacionVariable(string id, ValueWrapper value)
     {
         if (variables.ContainsKey(id))
         {
@@ -46,7 +46,7 @@ public class Environment
 
         if (parent != null)
         {
-            return parent.AssignVariable(id, value);
+            return parent.AsignacionVariable(id, value);
         }
 
         throw new Exception("Variable " + id + " not found");

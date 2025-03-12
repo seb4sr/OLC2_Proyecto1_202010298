@@ -4,16 +4,27 @@ program: declaraciones*;
 
 declaraciones: declaracion_variable | stmt;
 
-declaracion_variable: 'var' ID expr '=' expr ';';
+declaracion_variable: 'var' ID tipo '=' expr ';' #DeclaracionVariableConValor
+					| 'var'ID tipo ';' #DeclaracionVariableSinValor
+					| ID ':=' expr ';'	#DeclaracionImplicita
+;
 
-stmt: expr ';' # Expresion | 'fmt.Println(' expr ')' ';' # FmtPrint;
+stmt: expr ';' # Expresion 
+	| 'fmt.Println(' expr ')' ';' # FmtPrint;
+
+tipo: 'int'      # TipoInt
+    | 'float64'  # TipoFloat
+    | 'string'   # TipoString
+    | 'bool'     # TipoBool
+    | 'rune'     # TipoRune
+;
 
 
 expr:
 	'-' expr						# Negacion
-	| expr op = ('*' | '/') expr	# MulDiv
+	| expr op = ('*' | '/' | '%') expr	# MulDivMod
 	| expr op = ('+' | '-') expr	# SumRes
-	| expr op = ('>' | '<' | '>=' | '<=') expr	# Relacioanles
+	| expr op = ('>' | '<' | '>=' | '<=') expr	# Relacionales
 	| expr op = ('==' | '!=') expr				# Igualdad
 	| ID '=' expr					# Asignacion
 	| BOOL							# Boolean
