@@ -74,7 +74,18 @@ public class CompilerVisitor : LanguageBaseVisitor<ValueWrapper>
         case EnteroValue:
             currentEnvironment.DeclaracionVariable(id,value); 
             break;
-
+        case FloatValue:
+            currentEnvironment.DeclaracionVariable(id,value); 
+            break;
+        case BooleanValue:
+            currentEnvironment.DeclaracionVariable(id,value); 
+            break;
+        case StringValue:
+            currentEnvironment.DeclaracionVariable(id,value); 
+            break;
+        case RuneValue:
+            currentEnvironment.DeclaracionVariable(id,value); 
+            break;
         default:
             throw new Exception("Invalid operation");
     }
@@ -91,12 +102,32 @@ public class CompilerVisitor : LanguageBaseVisitor<ValueWrapper>
             "string" => valor is StringValue,
             "bool" => valor is BooleanValue,
             "rune" => valor is RuneValue,
-            _ => false // Tipo desconocido
+            _ => false 
         };
     }
 
 
-    // VisitExprStmt
+public override ValueWrapper VisitIf(LanguageParser.IfContext context)
+    {
+        ValueWrapper cond = Visit(context.expr());
+
+        if (cond is not BooleanValue)
+        {
+            throw new Exception("Invalid condition");
+        }
+
+        if ((cond as BooleanValue).Value)
+        {
+            Visit(context.stmt(0));
+        }
+        else if (context.stmt().Length > 1)
+        {
+            Visit(context.stmt(1));
+        }
+
+        return defaultVoid;
+    }
+
     public override ValueWrapper VisitExpresion(LanguageParser.ExpresionContext context)
     {
         return Visit(context.expr());

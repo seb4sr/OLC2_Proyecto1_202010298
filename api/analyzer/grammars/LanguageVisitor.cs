@@ -80,6 +80,27 @@ public interface ILanguageVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitFmtPrint([NotNull] LanguageParser.FmtPrintContext context);
 	/// <summary>
+	/// Visit a parse tree produced by the <c>Bloque</c>
+	/// labeled alternative in <see cref="LanguageParser.stmt"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitBloque([NotNull] LanguageParser.BloqueContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>If</c>
+	/// labeled alternative in <see cref="LanguageParser.stmt"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitIf([NotNull] LanguageParser.IfContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>While</c>
+	/// labeled alternative in <see cref="LanguageParser.stmt"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitWhile([NotNull] LanguageParser.WhileContext context);
+	/// <summary>
 	/// Visit a parse tree produced by the <c>TipoInt</c>
 	/// labeled alternative in <see cref="LanguageParser.tipo"/>.
 	/// </summary>
