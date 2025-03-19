@@ -94,12 +94,46 @@ public interface ILanguageVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitIf([NotNull] LanguageParser.IfContext context);
 	/// <summary>
-	/// Visit a parse tree produced by the <c>While</c>
+	/// Visit a parse tree produced by the <c>ForCond</c>
 	/// labeled alternative in <see cref="LanguageParser.stmt"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	Result VisitWhile([NotNull] LanguageParser.WhileContext context);
+	Result VisitForCond([NotNull] LanguageParser.ForCondContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>For</c>
+	/// labeled alternative in <see cref="LanguageParser.stmt"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitFor([NotNull] LanguageParser.ForContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>Break</c>
+	/// labeled alternative in <see cref="LanguageParser.stmt"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitBreak([NotNull] LanguageParser.BreakContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>Continue</c>
+	/// labeled alternative in <see cref="LanguageParser.stmt"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitContinue([NotNull] LanguageParser.ContinueContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>Return</c>
+	/// labeled alternative in <see cref="LanguageParser.stmt"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitReturn([NotNull] LanguageParser.ReturnContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="LanguageParser.inicializacionesfor"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitInicializacionesfor([NotNull] LanguageParser.InicializacionesforContext context);
 	/// <summary>
 	/// Visit a parse tree produced by the <c>TipoInt</c>
 	/// labeled alternative in <see cref="LanguageParser.tipo"/>.
@@ -136,12 +170,38 @@ public interface ILanguageVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitTipoRune([NotNull] LanguageParser.TipoRuneContext context);
 	/// <summary>
+	/// Visit a parse tree produced by <see cref="LanguageParser.call"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitCall([NotNull] LanguageParser.CallContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="LanguageParser.atri"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitAtri([NotNull] LanguageParser.AtriContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>Or</c>
+	/// labeled alternative in <see cref="LanguageParser.expr"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitOr([NotNull] LanguageParser.OrContext context);
+	/// <summary>
 	/// Visit a parse tree produced by the <c>Parentesis</c>
 	/// labeled alternative in <see cref="LanguageParser.expr"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitParentesis([NotNull] LanguageParser.ParentesisContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>Incre</c>
+	/// labeled alternative in <see cref="LanguageParser.expr"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitIncre([NotNull] LanguageParser.IncreContext context);
 	/// <summary>
 	/// Visit a parse tree produced by the <c>String</c>
 	/// labeled alternative in <see cref="LanguageParser.expr"/>.
@@ -178,6 +238,13 @@ public interface ILanguageVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitFloat([NotNull] LanguageParser.FloatContext context);
 	/// <summary>
+	/// Visit a parse tree produced by the <c>Not</c>
+	/// labeled alternative in <see cref="LanguageParser.expr"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitNot([NotNull] LanguageParser.NotContext context);
+	/// <summary>
 	/// Visit a parse tree produced by the <c>MulDivMod</c>
 	/// labeled alternative in <see cref="LanguageParser.expr"/>.
 	/// </summary>
@@ -205,6 +272,27 @@ public interface ILanguageVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitRelacionales([NotNull] LanguageParser.RelacionalesContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>And</c>
+	/// labeled alternative in <see cref="LanguageParser.expr"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitAnd([NotNull] LanguageParser.AndContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>Decre</c>
+	/// labeled alternative in <see cref="LanguageParser.expr"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitDecre([NotNull] LanguageParser.DecreContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>CallExpr</c>
+	/// labeled alternative in <see cref="LanguageParser.expr"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitCallExpr([NotNull] LanguageParser.CallExprContext context);
 	/// <summary>
 	/// Visit a parse tree produced by the <c>Id</c>
 	/// labeled alternative in <see cref="LanguageParser.expr"/>.

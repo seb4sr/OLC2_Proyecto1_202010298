@@ -6,6 +6,9 @@ antlr4 -Dlanguage=CSharp -o analyzer -package analyzer -visitor -no-listener ./g
 
 Accioens Importantes
 Boton crear archivo y cargar archico
-asignaciones
+Nil nullo arreglar
 Arreglar output
 arreglar resrevadas en id 
+Secuencias de Escape
+Switch CAse
+for slice

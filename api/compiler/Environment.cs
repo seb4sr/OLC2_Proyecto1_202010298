@@ -24,11 +24,11 @@ public class Environment
         throw new Exception("Variable " + id + " not found");
     }
 
-    public void DeclaracionVariable(string id, ValueWrapper value)
+    public void DeclaracionVariable(string id, ValueWrapper value, Antlr4.Runtime.IToken? token)
     {
         if (variables.ContainsKey(id))
         {
-            throw new Exception("Variable " + id + " already declared");
+            if (token != null) throw new ErrorSemantico("Variable " + id + " already declared", token);
         }
         else
         {

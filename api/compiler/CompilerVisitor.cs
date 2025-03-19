@@ -7,8 +7,15 @@ public class CompilerVisitor : LanguageBaseVisitor<ValueWrapper>
 {
 
     public string output = "";
-    private Environment currentEnvironment = new Environment(null);
-    private ValueWrapper defaultVoid = new VoidValue();
+    public Environment currentEnvironment;
+    public ValueWrapper defaultVoid = new VoidValue();
+    
+
+    public CompilerVisitor()
+    {
+        currentEnvironment = new Environment(null);
+        Embeded.Generate(currentEnvironment);
+    }
     
     public override ValueWrapper VisitProgram(LanguageParser.ProgramContext context)
     {
@@ -32,7 +39,7 @@ public class CompilerVisitor : LanguageBaseVisitor<ValueWrapper>
             throw new Exception($"Error: No se puede asignar un valor de tipo {value.GetType()} a la variable '{id}' de tipo {tipo}.");
         }
 
-        currentEnvironment.DeclaracionVariable(id, value);
+        currentEnvironment.DeclaracionVariable(id, value, context.Start);
         return defaultVoid;
     }
 
@@ -43,19 +50,19 @@ public class CompilerVisitor : LanguageBaseVisitor<ValueWrapper>
         ValueWrapper value;
         switch (tipo) {
             case "int":
-                currentEnvironment.DeclaracionVariable(id, new EnteroValue(0));
+                currentEnvironment.DeclaracionVariable(id, new EnteroValue(0), context.Start);
                 break;
             case "float64":
-                currentEnvironment.DeclaracionVariable(id, new FloatValue(0.0f));
+                currentEnvironment.DeclaracionVariable(id, new FloatValue(0.0f), context.Start);
                 break;
             case "bool":
-                currentEnvironment.DeclaracionVariable(id, new BooleanValue(false));
+                currentEnvironment.DeclaracionVariable(id, new BooleanValue(false), context.Start);
                 break;
             case "rune":
-                currentEnvironment.DeclaracionVariable(id, new RuneValue(0));
+                currentEnvironment.DeclaracionVariable(id, new RuneValue(0), context.Start);
                 break;
             case "string":
-                currentEnvironment.DeclaracionVariable(id, new StringValue(""));
+                currentEnvironment.DeclaracionVariable(id, new StringValue(""), context.Start);
                 break;
             default:
                 break;
@@ -72,19 +79,19 @@ public class CompilerVisitor : LanguageBaseVisitor<ValueWrapper>
     switch (value)
     {
         case EnteroValue:
-            currentEnvironment.DeclaracionVariable(id,value); 
+            currentEnvironment.DeclaracionVariable(id,value, context.Start); 
             break;
         case FloatValue:
-            currentEnvironment.DeclaracionVariable(id,value); 
+            currentEnvironment.DeclaracionVariable(id,value, context.Start); 
             break;
         case BooleanValue:
-            currentEnvironment.DeclaracionVariable(id,value); 
+            currentEnvironment.DeclaracionVariable(id,value, context.Start); 
             break;
         case StringValue:
-            currentEnvironment.DeclaracionVariable(id,value); 
+            currentEnvironment.DeclaracionVariable(id,value, context.Start); 
             break;
         case RuneValue:
-            currentEnvironment.DeclaracionVariable(id,value); 
+            currentEnvironment.DeclaracionVariable(id,value, context.Start); 
             break;
         default:
             throw new Exception("Invalid operation");
@@ -128,29 +135,80 @@ public override ValueWrapper VisitIf(LanguageParser.IfContext context)
         return defaultVoid;
     }
 
+
     public override ValueWrapper VisitExpresion(LanguageParser.ExpresionContext context)
     {
         return Visit(context.expr());
     }
 
-    // VisitPrintStmt
-    public override ValueWrapper VisitFmtPrint(LanguageParser.FmtPrintContext context)
-{
-    ValueWrapper value = Visit(context.expr());
-    output += value switch
+    public override ValueWrapper VisitFmtPrint(LanguageParser.FmtPrintContext context)  
     {
-        EnteroValue a => a.Value.ToString(),
-        FloatValue b => b.Value.ToString("G7", CultureInfo.InvariantCulture), 
-        StringValue c => c.Value,
-        BooleanValue d => d.Value.ToString(),
-        RuneValue e => e.Value.ToString(),
-        VoidValue v => "Trying to print a Void Value",
-        _ => $"[Tipo desconocido: {value.GetType().Name}]"
-    };
-    output += "\n";
+
+        foreach (var expr in context.expr()){
+            ValueWrapper value = Visit(expr);
+            output += value switch
+                {
+                    EnteroValue a => a.Value.ToString(),
+                    FloatValue b => b.Value.ToString("G7", CultureInfo.InvariantCulture), 
+                    StringValue c => c.Value,
+                    BooleanValue d => d.Value.ToString(),
+                    RuneValue e => e.Value.ToString(),
+                    FunctionValue e => "<function>" + e.name.ToString(),
+                    VoidValue v => "Trying to print a Void Value",
+                    _ => $"[Tipo desconocido: {value.GetType().Name}]"
+                };
+                output += " ";
+        }
+        output += "\n";
+    //ValueWrapper value = Visit(context.expr());
+    
 
     return defaultVoid;
 }
+
+    public override ValueWrapper VisitCallExpr(LanguageParser.CallExprContext context)
+    {
+        ValueWrapper callee = Visit(context.expr());
+
+
+        foreach (var call in context.call())
+        {
+            if (callee is FunctionValue functionValue)
+            {
+                callee = VisitCall(functionValue.invocable, call.atri());
+            }
+            else
+            {
+                throw new ErrorSemantico("Invalid function call", context.Start);
+            }
+        }
+
+        return callee;
+    }
+
+    public ValueWrapper VisitCall(Invocable invocable, LanguageParser.AtriContext context)
+    {
+
+        List<ValueWrapper> arguments = new List<ValueWrapper>();
+
+        if (context != null)
+        {
+            foreach (var expr in context.expr())
+            {
+                arguments.Add(Visit(expr));
+            }
+        }
+
+        // if (context != null && arguments.Count != invocable.Arity())
+        // {
+        //     throw new SemanticError("Invalid number of arguments", context.Start);
+        // }
+
+        return invocable.Invoke(arguments, this);
+
+    }
+
+
 
 
     public override ValueWrapper VisitAsignacion(LanguageParser.AsignacionContext context)
@@ -160,7 +218,6 @@ public override ValueWrapper VisitIf(LanguageParser.IfContext context)
         return currentEnvironment.AsignacionVariable(id, value);
     }
 
-    // VisitIdentifier
     public override ValueWrapper VisitId(LanguageParser.IdContext context)
     {
         string id = context.ID().GetText();
@@ -191,12 +248,10 @@ public override ValueWrapper VisitIf(LanguageParser.IfContext context)
     // VisitNumber
     public override ValueWrapper VisitEntero(LanguageParser.EnteroContext context)
     {
-        //return int.Parse(context.GetText());
         return new EnteroValue(int.Parse(context.INT().GetText()));
     }
     public override ValueWrapper VisitFloat(LanguageParser.FloatContext context)
     {
-        //return int.Parse(context.GetText());
         return new FloatValue(float.Parse(context.FLOAT().GetText()));
     }
     public override ValueWrapper VisitRune(LanguageParser.RuneContext context)
@@ -351,4 +406,152 @@ public override ValueWrapper VisitIf(LanguageParser.IfContext context)
     }
     
 
+    public override ValueWrapper VisitIncre(LanguageParser.IncreContext context)
+    {
+    
+        string id = context.ID().GetText();
+
+        ValueWrapper currentValue = currentEnvironment.GetVariable(id);
+
+        ValueWrapper newValue = currentValue switch
+        {
+            EnteroValue l => new EnteroValue(l.Value + 1),
+            FloatValue l => new FloatValue(l.Value + 1),
+            _ => throw new Exception($"Invalid operation: Cannot apply '++' to type {currentValue.GetType().Name}")
+        };
+
+        currentEnvironment.AsignacionVariable(id, newValue);
+
+        return newValue; 
+    }   
+    public override ValueWrapper VisitDecre(LanguageParser.DecreContext context)
+    {
+    
+        string id = context.ID().GetText();
+
+        ValueWrapper currentValue = currentEnvironment.GetVariable(id);
+
+        ValueWrapper newValue = currentValue switch
+        {
+            EnteroValue l => new EnteroValue(l.Value -1),
+            FloatValue l => new FloatValue(l.Value -1),
+            _ => throw new Exception($"Invalid operation: Cannot apply '++' to type {currentValue.GetType().Name}")
+        };
+
+        currentEnvironment.AsignacionVariable(id, newValue);
+
+        return newValue; 
+    } 
+
+    public override ValueWrapper VisitFor(LanguageParser.ForContext context)
+    {
+        Environment preEnvi = currentEnvironment;
+        currentEnvironment = new Environment(currentEnvironment);
+
+        Visit(context.inicializacionesfor());
+
+        VisitForBody(context);
+
+        currentEnvironment = preEnvi;
+        return defaultVoid;
+    }
+
+    public void VisitForBody(LanguageParser.ForContext context)
+    {
+        ValueWrapper condition = Visit(context.expr(0));
+
+        var lastEnvi = currentEnvironment;
+
+
+        if (condition is not BooleanValue)
+        {
+            throw new ErrorSemantico("Invalid condition", context.Start);
+        }
+
+
+        try
+        {
+            while (condition is BooleanValue boolCondition && boolCondition.Value)
+            {
+                Visit(context.stmt());
+                Visit(context.expr(1));
+                condition = Visit(context.expr(0));
+            }
+        }
+        catch (BreakEx)
+        {
+            currentEnvironment = lastEnvi;
+        }
+        catch (ContinueEx)
+        {
+            currentEnvironment = lastEnvi;
+            Visit(context.expr(1));
+            VisitForBody(context);
+        }
+
+    }
+
+    public override ValueWrapper VisitBreak(LanguageParser.BreakContext context)
+    {
+        throw new BreakEx();
+    }
+
+    public override ValueWrapper VisitContinue(LanguageParser.ContinueContext context)
+    {
+        throw new ContinueEx();
+    }
+
+    public override ValueWrapper VisitReturn(LanguageParser.ReturnContext context)
+    {
+        ValueWrapper value = defaultVoid;
+
+        if (context.expr() != null)
+        {
+            value = Visit(context.expr());
+        }
+
+
+        throw new ReturnEx(value);
+    }
+
+    public override ValueWrapper VisitForCond(LanguageParser.ForCondContext context)
+    {
+        Environment preEnvi = currentEnvironment;
+        currentEnvironment = new Environment(currentEnvironment);
+
+        ValueWrapper condition = Visit(context.expr());
+
+        var lastEnvi = currentEnvironment;
+        if (condition is not BooleanValue)
+        {
+            throw new ErrorSemantico("Invalid condition", context.Start);
+        }
+
+
+        try
+        {
+            while (condition is BooleanValue boolCondition && boolCondition.Value)
+        {
+            try
+            {
+                Visit(context.stmt());
+            }
+            catch (ContinueEx)
+            {
+                condition = Visit(context.expr());
+                continue;
+            }
+
+            condition = Visit(context.expr());
+        }
+        }
+        catch (BreakEx)
+        {
+            currentEnvironment = lastEnvi;
+        }
+        
+        currentEnvironment = preEnvi;
+        return defaultVoid;
+    }
+    
 }

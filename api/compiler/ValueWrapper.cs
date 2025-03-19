@@ -10,5 +10,6 @@ public record BooleanValue(bool Value) : ValueWrapper;
 public record RuneValue(uint Value) : ValueWrapper;
 
 public record VoidValue : ValueWrapper;
-
+public record ObjectValue(Environment env) : ValueWrapper;
+public record FunctionValue(Invocable invocable, string name) : ValueWrapper;
 
