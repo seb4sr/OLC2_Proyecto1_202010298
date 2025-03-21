@@ -1,0 +1,42 @@
+puntos := 0
+
+	fmt.Println("=== Archivo de prueba básico ===")
+
+	fmt.Println("==== Declaración de variables ====")
+	puntosDeclaracion := 0
+
+	fmt.Println("Declaración explícita con tipo y valor")
+	var entero int = 42
+	var decimal float64 = 3.14159
+	var texto string = "Hola, mundo!"
+	var booleano bool = true
+
+	fmt.Println("entero:", entero)
+	fmt.Println("decimal:", decimal)
+	fmt.Println("texto:", texto)
+	fmt.Println("booleano:", booleano)
+
+	if entero == 42 && decimal > 3.0 && texto == "Hola, mundo!" && booleano == true {
+		puntosDeclaracion = puntosDeclaracion + 1
+		fmt.Println("OK Declaración explícita con tipo y valor: correcto")
+	} else {
+		fmt.Println("X Declaración explícita con tipo y valor: incorrecto")
+	}
+
+    fmt.Println("\nDeclaración explícita con tipo y sin valor")
+	var enteroSinValor int
+	var decimalSinValor float64
+	var textoSinValor string
+	var booleanoSinValor bool
+
+	fmt.Println("enteroSinValor:", enteroSinValor)
+	fmt.Println("decimalSinValor:", decimalSinValor)
+	fmt.Println("textoSinValor:", textoSinValor)
+	fmt.Println("booleanoSinValor:", booleanoSinValor)
+
+	if enteroSinValor == 0 && booleanoSinValor == false && textoSinValor == " "{
+		puntosDeclaracion = puntosDeclaracion + 1
+		fmt.Println("OK Declaración explícita con tipo y sin valor: correcto")
+	} else {
+		fmt.Println("X Declaración explícita con tipo y sin valor: incorrecto")
+	}

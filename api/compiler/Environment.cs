@@ -9,7 +9,7 @@ public class Environment
         this.parent = parent;
     }
 
-    public ValueWrapper GetVariable(string id)
+    public ValueWrapper GetVariable(string id,Antlr4.Runtime.IToken token)
     {
         if (variables.ContainsKey(id))
         {
@@ -18,10 +18,10 @@ public class Environment
 
         if (parent != null)
         {
-            return parent.GetVariable(id);
+            return parent.GetVariable(id, token);
         }
 
-        throw new Exception("Variable " + id + " not found");
+        throw new ErrorSemantico("Variable " + id + " not found", token);
     }
 
     public void DeclaracionVariable(string id, ValueWrapper value, Antlr4.Runtime.IToken? token)
@@ -36,7 +36,7 @@ public class Environment
         }
     }
 
-    public ValueWrapper AsignacionVariable(string id, ValueWrapper value)
+    public ValueWrapper AsignacionVariable(string id, ValueWrapper value, Antlr4.Runtime.IToken? token)
     {
         if (variables.ContainsKey(id))
         {
@@ -46,10 +46,10 @@ public class Environment
 
         if (parent != null)
         {
-            return parent.AsignacionVariable(id, value);
+            return parent.AsignacionVariable(id, value,token);
         }
 
-        throw new Exception("Variable " + id + " not found");
+        throw new ErrorSemantico("Variable " + id + " not found", token);
     }
 
 }

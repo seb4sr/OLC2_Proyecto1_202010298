@@ -66,10 +66,10 @@ export default function Home() {
         
       </div>
       
-      <div className="flex gap-6 w-full h-[100vh]">
+      <div className="flex gap-6 w-full h-[75vh]">
       <div className="w-[60%] h-full border rounded-lg">
           <Editor 
-          height="100vh" 
+          height="75vh" 
           //width="100vh"
           defaultLanguage="go" 
           className="w-full" 

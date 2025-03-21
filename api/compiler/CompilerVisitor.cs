@@ -53,6 +53,7 @@ public class CompilerVisitor : LanguageBaseVisitor<ValueWrapper>
                 currentEnvironment.DeclaracionVariable(id, new EnteroValue(0), context.Start);
                 break;
             case "float64":
+                //Console.WriteLine((double)0);
                 currentEnvironment.DeclaracionVariable(id, new FloatValue(0.0f), context.Start);
                 break;
             case "bool":
@@ -69,6 +70,33 @@ public class CompilerVisitor : LanguageBaseVisitor<ValueWrapper>
         }
         return defaultVoid;
     }
+
+    /*public override ValueWrapper VisitDeclaracionVarStruct(LanguageParser.DeclaracionVarStructContext context)
+    {
+        string id = context.ID().GetText();
+        string tipo = context.tipo().GetText();
+        ValueWrapper value;
+        switch (tipo) {
+            case "int":
+                currentEnvironment.DeclaracionVariable(id, new EnteroValue(0), context.Start);
+                break;
+            case "float64":
+                currentEnvironment.DeclaracionVariable(id, new FloatValue(0.0f), context.Start);
+                break;
+            case "bool":
+                currentEnvironment.DeclaracionVariable(id, new BooleanValue(false), context.Start);
+                break;
+            case "rune":
+                currentEnvironment.DeclaracionVariable(id, new RuneValue(0), context.Start);
+                break;
+            case "string":
+                currentEnvironment.DeclaracionVariable(id, new StringValue(""), context.Start);
+                break;
+            default:
+                break;
+        }
+        return defaultVoid;
+    }*/
 
 
     public override ValueWrapper VisitDeclaracionImplicita(LanguageParser.DeclaracionImplicitaContext context)
@@ -173,13 +201,27 @@ public override ValueWrapper VisitIf(LanguageParser.IfContext context)
 
         foreach (var call in context.call())
         {
-            if (callee is FunctionValue functionValue)
-            {
-                callee = VisitCall(functionValue.invocable, call.atri());
+            if (call is LanguageParser.FunCallContext funCall){
+    
+                if (callee is FunctionValue functionValue)
+                {
+                    callee = VisitCall(functionValue.invocable, funCall.atri());
+                }
+                else
+                {
+                    throw new ErrorSemantico("Invalid function call", context.Start);
+                }
             }
-            else
+            else if (call is LanguageParser.GetContext propertyAccess)
             {
-                throw new ErrorSemantico("Invalid function call", context.Start);
+                if (callee is InstanceValue instanceValue)
+                {
+                    callee = instanceValue.instance.Get(propertyAccess.ID().GetText(), propertyAccess.Start);
+                }
+                else
+                {
+                    throw new ErrorSemantico("Propiedad Invalida a la que se quiere acceder", context.Start);
+                }
             }
         }
 
@@ -213,15 +255,50 @@ public override ValueWrapper VisitIf(LanguageParser.IfContext context)
 
     public override ValueWrapper VisitAsignacion(LanguageParser.AsignacionContext context)
     {
-        string id = context.ID().GetText();
+        /*string id = context.ID().GetText();
         ValueWrapper value = Visit(context.expr());
-        return currentEnvironment.AsignacionVariable(id, value);
+        return currentEnvironment.AsignacionVariable(id, value);*/
+        var asignado = context.expr(0);
+        ValueWrapper value = Visit(context.expr(1));
+        
+        if (asignado is LanguageParser.IdContext idContext){
+
+            string id = idContext.ID().GetText();
+            currentEnvironment.AsignacionVariable(id, value, context.Start);
+
+        } else if (asignado is LanguageParser.CallExprContext calleContext){
+
+            ValueWrapper callee = Visit(calleContext.expr());
+            for( int i = 0; i < calleContext.call().Length; i++)
+            {
+                var call = calleContext.call(i);
+                if (i == calleContext.call().Length - 1)
+                {
+                    
+                    if (call is LanguageParser.GetContext propertyAccess)
+                    {
+                        if (callee is InstanceValue instanceValue)
+                        {
+                            instanceValue.instance.Set(propertyAccess.ID().GetText(), value);
+                        }
+                        else
+                        {
+                            throw new ErrorSemantico("Propiedad Invalida a la que se quiere acceder", context.Start);
+                        }
+                    }
+                }
+            }
+
+        } else {
+            throw new ErrorSemantico("Asignacion Invalida", context.Start);
+        }
+        return defaultVoid;
     }
 
     public override ValueWrapper VisitId(LanguageParser.IdContext context)
     {
         string id = context.ID().GetText();
-        return currentEnvironment.GetVariable(id);
+        return currentEnvironment.GetVariable(id, context.Start);
     }
     
 
@@ -240,6 +317,17 @@ public override ValueWrapper VisitIf(LanguageParser.IfContext context)
             EnteroValue i => new EnteroValue(-i.Value),
             FloatValue f => new FloatValue(-f.Value),
             _ => throw new Exception("Invalid operation")
+        };
+
+        
+    }
+    public override ValueWrapper VisitNot(LanguageParser.NotContext context)
+    {
+        ValueWrapper value = Visit(context.expr());
+        return value switch
+        {
+            BooleanValue i => new BooleanValue(!i.Value),
+            _ => throw new ErrorSemantico("Tipo Invalido para operacion !", context.Start)
         };
 
         
@@ -275,7 +363,9 @@ public override ValueWrapper VisitIf(LanguageParser.IfContext context)
     public override ValueWrapper VisitString(LanguageParser.StringContext context)
     {
         //return int.Parse(context.GetText());
-        return new StringValue(context.STRING().GetText());
+        string textoConComillas = context.STRING().GetText();
+        string sinComillas = textoConComillas.Substring(1, textoConComillas.Length - 2);
+        return new StringValue(sinComillas);
     }
 
     
@@ -370,6 +460,36 @@ public override ValueWrapper VisitIf(LanguageParser.IfContext context)
         };
     }
 
+    public override ValueWrapper VisitAnd(LanguageParser.AndContext context)
+    {
+        ValueWrapper left = Visit(context.GetChild(0));
+        ValueWrapper right = Visit(context.expr(1));
+        
+
+        return (left, right) switch
+        {
+            (BooleanValue l, BooleanValue r) => new BooleanValue(l.Value && r.Value),
+            
+
+            _ => throw new Exception("Invalid AND operation")
+        };
+    }
+     public override ValueWrapper VisitOr(LanguageParser.OrContext context)
+    {
+        ValueWrapper left = Visit(context.GetChild(0));
+        ValueWrapper right = Visit(context.expr(1));
+        
+
+        return (left, right) switch
+        {
+            (BooleanValue l, BooleanValue r) => new BooleanValue(l.Value || r.Value),
+            
+
+            _ => throw new Exception("Invalid AND operation")
+        };
+    }
+
+
     public override ValueWrapper VisitIgualdad(LanguageParser.IgualdadContext context)
     {
         ValueWrapper left = Visit(context.GetChild(0));
@@ -411,7 +531,7 @@ public override ValueWrapper VisitIf(LanguageParser.IfContext context)
     
         string id = context.ID().GetText();
 
-        ValueWrapper currentValue = currentEnvironment.GetVariable(id);
+        ValueWrapper currentValue = currentEnvironment.GetVariable(id, context.Start);
 
         ValueWrapper newValue = currentValue switch
         {
@@ -420,7 +540,7 @@ public override ValueWrapper VisitIf(LanguageParser.IfContext context)
             _ => throw new Exception($"Invalid operation: Cannot apply '++' to type {currentValue.GetType().Name}")
         };
 
-        currentEnvironment.AsignacionVariable(id, newValue);
+        currentEnvironment.AsignacionVariable(id, newValue, context.Start);
 
         return newValue; 
     }   
@@ -429,7 +549,7 @@ public override ValueWrapper VisitIf(LanguageParser.IfContext context)
     
         string id = context.ID().GetText();
 
-        ValueWrapper currentValue = currentEnvironment.GetVariable(id);
+        ValueWrapper currentValue = currentEnvironment.GetVariable(id, context.Start);
 
         ValueWrapper newValue = currentValue switch
         {
@@ -438,7 +558,7 @@ public override ValueWrapper VisitIf(LanguageParser.IfContext context)
             _ => throw new Exception($"Invalid operation: Cannot apply '++' to type {currentValue.GetType().Name}")
         };
 
-        currentEnvironment.AsignacionVariable(id, newValue);
+        currentEnvironment.AsignacionVariable(id, newValue, context.Start);
 
         return newValue; 
     } 
@@ -554,4 +674,52 @@ public override ValueWrapper VisitIf(LanguageParser.IfContext context)
         return defaultVoid;
     }
     
+    public override ValueWrapper VisitDeclaracion_funciones(LanguageParser.Declaracion_funcionesContext context)
+    {
+        var foreana = new FuncionForeana(currentEnvironment, context);
+        currentEnvironment.DeclaracionVariable(context.ID().GetText(), new FunctionValue(foreana, context.ID().GetText()), context.Start);
+        return defaultVoid;
+    }
+
+    public override ValueWrapper VisitDeclaracion_structs(LanguageParser.Declaracion_structsContext context)
+    {
+        Dictionary<string, LanguageParser.Declaracion_variableStructContext> propiedades = new Dictionary<string, LanguageParser.Declaracion_variableStructContext>();
+
+        Dictionary<string, FuncionForeana> metodos = new Dictionary<string, FuncionForeana>();
+        foreach (var propiedad in context.structBody()){
+            if ( propiedad.declaracion_variableStruct() != null){
+                var varDcl = propiedad.declaracion_variableStruct();
+                propiedades.Add(varDcl.ID().GetText(), varDcl);
+            } else if(propiedad.declaracion_funciones() != null){
+
+                var funDcl = propiedad.declaracion_funciones();
+                var FuncionForeana = new FuncionForeana(currentEnvironment, funDcl);
+                metodos.Add(funDcl.ID().GetText(), FuncionForeana);
+            }
+            }
+        LanguageStruct languageStruct = new LanguageStruct(context.ID().GetText(),propiedades, metodos);
+        currentEnvironment.DeclaracionVariable(context.ID().GetText(), new StructValue(languageStruct), context.Start);
+        return defaultVoid;
+    }
+
+    public override ValueWrapper VisitInstancia (LanguageParser.InstanciaContext context)
+    {
+        ValueWrapper classValue = currentEnvironment.GetVariable(context.ID().GetText(), context.Start);
+        if (classValue is not StructValue){
+            throw new ErrorSemantico("Instancia Valida de Struct", context.Start);
+        }
+        List <ValueWrapper> argumentos = new List<ValueWrapper>();
+        if ( context.atri() != null){
+
+            foreach (var argumento in context.atri().expr())
+            {
+
+                argumentos.Add(Visit(argumento));
+
+            }
+
+        }
+        var instancia = ((StructValue) classValue).LanguageStruct.Invoke(argumentos, this);
+        return instancia;
+    }
 }
