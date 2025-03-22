@@ -49,11 +49,7 @@ namespace api.Controllers
 
             return Ok(new { result = visitor.output });
 
-            // var walker = new ParseTreeWalker();
-            // var lister = new CompilerListerner();
-            // walker.Walk(lister, tree);
-
-            // return Ok(new { result = lister.GetResult() });
+            
         }
 
     }

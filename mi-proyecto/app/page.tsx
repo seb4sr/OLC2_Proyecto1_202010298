@@ -62,7 +62,7 @@ export default function Home() {
         <button className="px-4 py-2 bg-green-500 text-white rounded-lg font-bold text-2xl ml-175" onClick={handleExecute}> Ejecutar </button>
         <button className="px-4 py-2 bg-purple-500 text-white rounded-lg font-bold text-2xl ml-85"> Reporte AST </button>
         <button className="px-4 py-2 bg-yellow-500 text-white rounded-lg font-bold text-2xl"> Reporte Errores </button>
-        <button className="px-4 py-2 bg-blue-500 text-white rounded-lg font-bold text-2xl"> Tabla de Errores </button>
+        <button className="px-4 py-2 bg-blue-500 text-white rounded-lg font-bold text-2xl"> Tabla de Simbolos </button>
         
       </div>
       

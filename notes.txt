@@ -13,6 +13,8 @@ for slice
 Verificar tipos en parametros y cantidad
 Verificar tipos en asignacion
 Reportes
+slice len
+Slice strings.Join append
 
 
 type Persona struct {

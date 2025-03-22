@@ -5,11 +5,11 @@ using analyzer;
 public class LanguageStruct : Invocable {
 
     public string Name {get; set;}
-    public Dictionary<string, LanguageParser.Declaracion_variableStructContext> Propiedades {get; set;}
+    public Dictionary<string, LanguageParser.DeclaracionImplicitaContext> Propiedades {get; set;}
     public Dictionary<string, FuncionForeana> Metodos {get; set;}
 
     public LanguageStruct (string name,
-        Dictionary<string, LanguageParser.Declaracion_variableStructContext> propiedades,
+        Dictionary<string, LanguageParser.DeclaracionImplicitaContext> propiedades,
         Dictionary<string, FuncionForeana> metodos
     ) {
 
@@ -41,13 +41,13 @@ public class LanguageStruct : Invocable {
         foreach (var propi in Propiedades){
             var name = propi.Key;
             var value = propi.Value;
-            /*if (value.expr() != null){
+            if (value.expr() != null){
                 var varValue = visitor.Visit(value.expr());
                 nuevaInstancia.Set(name, varValue);
             } else{
                 nuevaInstancia.Set(name,visitor.defaultVoid);
-            }*/
-            nuevaInstancia.Set(name,visitor.defaultVoid);
+            }
+            //nuevaInstancia.Set(name,visitor.defaultVoid);
         }
 
         var constructor = GetMetodo("constructor");

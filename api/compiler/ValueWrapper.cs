@@ -9,6 +9,9 @@ public record StringValue(string Value) : ValueWrapper;
 public record BooleanValue(bool Value) : ValueWrapper;
 public record RuneValue(uint Value) : ValueWrapper;
 
+public record SliceValue(List<ValueWrapper> Elements) : ValueWrapper;
+public record Slice2Value(List<List<ValueWrapper>> Elements) : ValueWrapper;
+
 public record InstanceValue(Instance instance) : ValueWrapper;
 public record VoidValue : ValueWrapper;
 public record ObjectValue(Environment env) : ValueWrapper;

@@ -2,13 +2,15 @@
 using System.Globalization;
 using System.Text;
 using analyzer;
+using Microsoft.VisualBasic;
 
 public class CompilerVisitor : LanguageBaseVisitor<ValueWrapper>
 {
-
+    
     public string output = "";
     public Environment currentEnvironment;
     public ValueWrapper defaultVoid = new VoidValue();
+    
     
 
     public CompilerVisitor()
@@ -19,6 +21,7 @@ public class CompilerVisitor : LanguageBaseVisitor<ValueWrapper>
     
     public override ValueWrapper VisitProgram(LanguageParser.ProgramContext context)
     {
+        
         foreach (var dcl in context.declaraciones())
         {
             Visit(dcl);
@@ -30,6 +33,8 @@ public class CompilerVisitor : LanguageBaseVisitor<ValueWrapper>
    
     public override ValueWrapper VisitDeclaracionVariableConValor(LanguageParser.DeclaracionVariableConValorContext context)
     {
+        /*string texto = null;
+        Console.WriteLine(texto + " -> null");*/
         string id = context.ID().GetText();
         string tipo = context.tipo().GetText(); 
         ValueWrapper value = Visit(context.expr()); 
@@ -122,12 +127,173 @@ public class CompilerVisitor : LanguageBaseVisitor<ValueWrapper>
             currentEnvironment.DeclaracionVariable(id,value, context.Start); 
             break;
         default:
-            throw new Exception("Invalid operation");
+            throw new ErrorSemantico("Error con Declaracion Implica", context.Start);
     }
 
     return defaultVoid; 
 }
+    public override ValueWrapper VisitDeclaracionSliceValores(LanguageParser.DeclaracionSliceValoresContext context)
+    {
+        string id = context.ID().GetText();
+        List<ValueWrapper> valores = new List<ValueWrapper>();
+        var tipo = context.tipo().GetText();
+        
+        foreach(var expresion in context.expr()){
+            ValueWrapper value = Visit(expresion);
+            if(value is EnteroValue && tipo == "int" || value is FloatValue && tipo == "float64"
+            || value is BooleanValue && tipo == "bool" || value is RuneValue && tipo == "rune" 
+            || value is StringValue && tipo == "string"){
+                valores.Add(value);
+            } else
+            {
+                throw new ErrorSemantico("Asignacion de valores diferente al tipo de Slice1", context.Start);
+            }
+        }
+        currentEnvironment.DeclaracionVariable(id,new SliceValue(valores),context.Start);
+        return defaultVoid; 
+    }
+    public override ValueWrapper VisitDeclaracion2SliceValores(LanguageParser.Declaracion2SliceValoresContext context)
+    {
+        string id = context.ID().GetText();
+        List<List<ValueWrapper>> valoresConjunto = new List<List<ValueWrapper>>();
+        
+        var tipo = context.tipo().GetText();
+        //var valores2Slices = context.valores2Slices().valorUnitario();
+        foreach (var conjunto in context.valores2Slices().valorUnitario())
+        {   
+            List<ValueWrapper> valoresElemento = new List<ValueWrapper>();
+            foreach(var elemento in conjunto.expr() )
+            {
+                ValueWrapper value = Visit(elemento);
+                if(value is EnteroValue && tipo == "int" || value is FloatValue && tipo == "float64"
+                || value is BooleanValue && tipo == "bool" || value is RuneValue && tipo == "rune" 
+                || value is StringValue && tipo == "String" || value is SliceValue){
+                    valoresElemento.Add(value);
+                } else
+                {
+                    throw new ErrorSemantico("Asignacion de valores diferente al tipo de Slice2", context.Start);
+                }
+            }
 
+            //ValueWrapper value2 = Visit(conjunto);
+            //Console.WriteLine(value2);
+            valoresConjunto.Add(valoresElemento);
+            
+            //valoresConjunto.Add(valoresElemento);
+        }
+        currentEnvironment.DeclaracionVariable(id,new Slice2Value(valoresConjunto),context.Start);
+        return defaultVoid; 
+    }
+    public override ValueWrapper VisitDeclaracionSliceSinValores(LanguageParser.DeclaracionSliceSinValoresContext context)
+    {
+        string id = context.ID().GetText();
+        List<ValueWrapper> valores = new List<ValueWrapper>();
+        //Console.WriteLine(valores.GetType());
+        currentEnvironment.DeclaracionVariable(id,new SliceValue(valores),context.Start);
+        return defaultVoid; 
+    }
+
+    public override ValueWrapper VisitGetSlices(LanguageParser.GetSlicesContext context)
+    {
+        ValueWrapper value1 = Visit(context.expr(1));
+        
+        
+        if(value1 is not EnteroValue)
+        {
+            throw new ErrorSemantico("Indice 1 no es EnteroValue", context.Start);
+        }
+        
+        int index1 = ((EnteroValue)value1).Value;
+
+        var valueId = context.expr(0);
+        string srtId = "none";
+        if(valueId is LanguageParser.IdContext id)
+        {
+             srtId = id.ID().GetText();
+        }
+        ValueWrapper valueSlice = currentEnvironment.GetVariable(srtId,context.Start);
+        if (valueSlice is  SliceValue slice)
+        {
+            
+            List<ValueWrapper> elementos = slice.Elements;
+            ValueWrapper newValue = elementos[index1] switch
+            {
+                EnteroValue l => new EnteroValue(l.Value),
+                FloatValue l => new FloatValue(l.Value),
+                StringValue l => new StringValue(l.Value),
+                BooleanValue l => new BooleanValue(l.Value),
+                RuneValue l => new RuneValue(l.Value),
+                SliceValue l => new SliceValue(l.Elements),
+                _ => throw new ErrorSemantico("Erro Access Slice", context.Start)
+            };
+            return newValue;
+        } else if (valueSlice is  Slice2Value slice2)
+        {
+            if(context.expr().Length == 3)
+            {
+                ValueWrapper value2 = Visit(context.expr(2));
+                if(value2 is not EnteroValue)
+                {
+                    throw new ErrorSemantico("Indice 2 no es EnteroValue", context.Start);
+                }
+                int index2 = ((EnteroValue)value2).Value;
+                List<List<ValueWrapper>> elementos = slice2.Elements;
+                ValueWrapper newValue = elementos[index1][index2] switch
+                {
+                    EnteroValue l => new EnteroValue(l.Value),
+                    FloatValue l => new FloatValue(l.Value),
+                    StringValue l => new StringValue(l.Value),
+                    BooleanValue l => new BooleanValue(l.Value),
+                    RuneValue l => new RuneValue(l.Value),
+                    SliceValue l => new SliceValue(l.Elements),
+                    _ => throw new ErrorSemantico("Erro Access Slice", context.Start)
+                };
+                return newValue;
+            }
+            if(context.expr().Length == 2)
+            {
+                
+                int index2 = ((EnteroValue)value1).Value;
+                List<List<ValueWrapper>> elementos = slice2.Elements;
+                ValueWrapper newValue = elementos[index1] switch
+                {
+                    List<ValueWrapper> l => new SliceValue(l),
+                    
+                    _ => throw new ErrorSemantico("Erro Access Slice", context.Start)
+                };
+                return newValue;
+            }
+        } 
+        else 
+        {
+            throw new ErrorSemantico("Tratando de Entrar a una Variable !Slice", context.Start);
+        }
+
+        return defaultVoid; 
+    }
+
+    public override ValueWrapper VisitSliceIndex(LanguageParser.SliceIndexContext context)
+    {   
+        var asignado = context.expr(0);
+        if (asignado is LanguageParser.IdContext idContext){
+            Console.WriteLine(asignado);
+            string id = idContext.ID().GetText();
+            ValueWrapper slice = currentEnvironment.GetVariable(id,context.Start);
+            ValueWrapper value = Visit(context.expr(1));
+            if (slice is SliceValue sliceVar){
+                    List<ValueWrapper> elementos = sliceVar.Elements;
+                    for(int i = 0; i < elementos.Count; i++)
+                    {
+                        
+                        if (value == elementos[i])
+                        {
+                            return new EnteroValue(i);
+                        }
+                    }
+            }
+        }
+        return new EnteroValue(-1); 
+    }
     private bool TipoCoincide(string tipoDeclarado, ValueWrapper valor)
     {
         return tipoDeclarado switch
@@ -181,7 +347,36 @@ public override ValueWrapper VisitIf(LanguageParser.IfContext context)
                     StringValue c => c.Value,
                     BooleanValue d => d.Value.ToString(),
                     RuneValue e => e.Value.ToString(),
-                    FunctionValue e => "<function>" + e.name.ToString(),
+                    FunctionValue f => "<function>" + f.name.ToString(),
+                    SliceValue s => "<slice> [" + string.Join(",", s.Elements.Select(e =>
+                        e switch {
+                            EnteroValue a => a.Value.ToString(),
+                            FloatValue b => b.Value.ToString(CultureInfo.InvariantCulture),
+                            StringValue c => $"\"{c.Value}\"",
+                            BooleanValue d => d.Value.ToString(),
+                            RuneValue r => r.Value.ToString(),
+                            FunctionValue f => "<function>" + f.name,
+                            VoidValue => "void",
+                            SliceValue => "<slice>", // prevenir recursión infinita
+                            _ => "[unknown]"
+                        } 
+                    )) + "]",
+                    Slice2Value s2 => "<slice2> [" + string.Join(",", s2.Elements.Select(innerList =>
+                        "[" + string.Join(",", innerList.Select(e =>
+                            e switch {
+                                EnteroValue a => a.Value.ToString(),
+                                FloatValue b => b.Value.ToString(CultureInfo.InvariantCulture),
+                                StringValue c => $"\"{c.Value}\"",
+                                BooleanValue d => d.Value.ToString(),
+                                RuneValue r => r.Value.ToString(),
+                                FunctionValue f => "<function>" + f.name,
+                                VoidValue => "void",
+                                SliceValue => "<slice>", // prevenir recursión infinita
+                                Slice2Value => "<slice2>", // prevenir recursión infinita
+                                _ => "[unknown]"
+                            }
+                        )) + "]"
+                    )) + "]",
                     VoidValue v => "Trying to print a Void Value",
                     _ => $"[Tipo desconocido: {value.GetType().Name}]"
                 };
@@ -212,7 +407,7 @@ public override ValueWrapper VisitIf(LanguageParser.IfContext context)
                     throw new ErrorSemantico("Invalid function call", context.Start);
                 }
             }
-            else if (call is LanguageParser.GetContext propertyAccess)
+            /*else if (call is LanguageParser.GetContext propertyAccess)
             {
                 if (callee is InstanceValue instanceValue)
                 {
@@ -222,7 +417,7 @@ public override ValueWrapper VisitIf(LanguageParser.IfContext context)
                 {
                     throw new ErrorSemantico("Propiedad Invalida a la que se quiere acceder", context.Start);
                 }
-            }
+            }*/
         }
 
         return callee;
@@ -260,13 +455,21 @@ public override ValueWrapper VisitIf(LanguageParser.IfContext context)
         return currentEnvironment.AsignacionVariable(id, value);*/
         var asignado = context.expr(0);
         ValueWrapper value = Visit(context.expr(1));
-        
+        //Console.WriteLine(asignado.GetType());
         if (asignado is LanguageParser.IdContext idContext){
 
             string id = idContext.ID().GetText();
+            /*Console.WriteLine(id);
+            Console.WriteLine(value.GetType());
+            Console.WriteLine(currentEnvironment.GetVariable(id,context.Start).GetType());*/
+            if (value.GetType() != currentEnvironment.GetVariable(id,context.Start).GetType())
+            {
+               throw new ErrorSemantico("Diferente tipo de valor a asignar a la variable", context.Start);
+            }
             currentEnvironment.AsignacionVariable(id, value, context.Start);
 
-        } else if (asignado is LanguageParser.CallExprContext calleContext){
+        } /*else if (asignado is LanguageParser.CallExprContext calleContext)
+        {
 
             ValueWrapper callee = Visit(calleContext.expr());
             for( int i = 0; i < calleContext.call().Length; i++)
@@ -289,7 +492,73 @@ public override ValueWrapper VisitIf(LanguageParser.IfContext context)
                 }
             }
 
-        } else {
+        } */else if(asignado is LanguageParser.GetSlicesContext AsignarSlice)
+        {
+            if (AsignarSlice.expr().Length == 2)
+            {
+                var valueId = AsignarSlice.expr(0);
+                string srtId = "none";
+                if(valueId is LanguageParser.IdContext id)
+                {
+                    srtId = id.ID().GetText();
+                }
+                ValueWrapper valueSlice = currentEnvironment.GetVariable(srtId,context.Start);
+                if (valueSlice is not SliceValue slice)
+                {
+                    throw new ErrorSemantico("Tratando de Entrar a una Variable !Slice", context.Start);
+                } 
+
+                List<ValueWrapper> elementos = slice.Elements;
+                ValueWrapper value1 = Visit(AsignarSlice.expr(1));
+                
+                if(value1 is not EnteroValue)
+                {
+                    throw new ErrorSemantico("Indice 1 no es EnteroValue", context.Start);
+                }
+
+                int index1 = ((EnteroValue)value1).Value;
+
+                elementos[index1] = value;
+                currentEnvironment.AsignacionVariable(srtId,new SliceValue(elementos),context.Start);
+            }
+            if (AsignarSlice.expr().Length == 3)
+            {
+                var valueId = AsignarSlice.expr(0);
+                string srtId = "none";
+                if(valueId is LanguageParser.IdContext id)
+                {
+                    srtId = id.ID().GetText();
+                }
+                ValueWrapper valueSlice = currentEnvironment.GetVariable(srtId,context.Start);
+                if (valueSlice is not Slice2Value slice)
+                {
+                    throw new ErrorSemantico("Tratando de Entrar a una Variable !2Slice", context.Start);
+                } 
+
+                List<List<ValueWrapper>> elementos = slice.Elements;
+                ValueWrapper value1 = Visit(AsignarSlice.expr(1));
+                ValueWrapper value2 = Visit(AsignarSlice.expr(2));
+                if(value1 is not EnteroValue)
+                {
+                    throw new ErrorSemantico("Indice 1 no es EnteroValue", context.Start);
+                }
+
+                int index1 = ((EnteroValue)value1).Value;
+                if(value2 is not EnteroValue)
+                {
+                    throw new ErrorSemantico("Indice 1 no es EnteroValue", context.Start);
+                }
+
+                int index2 = ((EnteroValue)value2).Value;
+                elementos[index1][index2] = value;
+                currentEnvironment.AsignacionVariable(srtId,new Slice2Value(elementos),context.Start);
+            }
+
+            
+            
+            
+        } 
+        else {
             throw new ErrorSemantico("Asignacion Invalida", context.Start);
         }
         return defaultVoid;
@@ -683,13 +952,17 @@ public override ValueWrapper VisitIf(LanguageParser.IfContext context)
 
     public override ValueWrapper VisitDeclaracion_structs(LanguageParser.Declaracion_structsContext context)
     {
-        Dictionary<string, LanguageParser.Declaracion_variableStructContext> propiedades = new Dictionary<string, LanguageParser.Declaracion_variableStructContext>();
+        Dictionary<string, LanguageParser.DeclaracionImplicitaContext> propiedades = new Dictionary<string, LanguageParser.DeclaracionImplicitaContext>();
 
         Dictionary<string, FuncionForeana> metodos = new Dictionary<string, FuncionForeana>();
         foreach (var propiedad in context.structBody()){
-            if ( propiedad.declaracion_variableStruct() != null){
-                var varDcl = propiedad.declaracion_variableStruct();
-                propiedades.Add(varDcl.ID().GetText(), varDcl);
+
+            if ( propiedad.declaracion_variable() != null){
+                var varDcl = propiedad.declaracion_variable();
+                if (varDcl is LanguageParser.DeclaracionVariableConValorContext valor) {
+                    //propiedades.Add(valor.ID().GetText(), valor);
+                }
+                //propiedades.Add(varDcl.ID().GetText(), varDcl);
             } else if(propiedad.declaracion_funciones() != null){
 
                 var funDcl = propiedad.declaracion_funciones();
